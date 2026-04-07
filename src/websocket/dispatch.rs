@@ -67,6 +67,7 @@ pub async fn dispatch(
                 message: ServerMsg::NewMessage {
                     chat_id: sent.message.chat_id,
                     message_id: sent.message.id,
+                    seq: sent.message.seq,
                     sender_id: sent.message.sender_id,
                     body: sent.message.body,
                     message_type: sent.message.message_type,

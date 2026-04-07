@@ -147,6 +147,7 @@ WITH membership AS (
 SELECT
   m.id,
   m.chat_id,
+  m.seq,
   m.sender_id,
   m.body,
   m.message_type,
@@ -199,6 +200,7 @@ WITH membership AS (
 SELECT
   m.id,
   m.chat_id,
+  m.seq,
   m.sender_id,
   m.body,
   m.message_type,
@@ -266,6 +268,7 @@ LEFT JOIN LATERAL (
 SELECT
   m.id,
   m.chat_id,
+  m.seq,
   m.sender_id,
   m.body,
   m.message_type,
@@ -300,6 +303,7 @@ LIMIT $4
 SELECT
   m.id,
   m.chat_id,
+  m.seq,
   m.sender_id,
   m.body,
   m.message_type,
@@ -357,6 +361,7 @@ LIMIT $3
         Ok(MessageSearchResult {
             id: row.try_get("", "id")?,
             chat_id: row.try_get("", "chat_id")?,
+            seq: row.try_get("", "seq")?,
             sender_id: row.try_get("", "sender_id")?,
             body: row.try_get("", "body")?,
             message_type: row.try_get("", "message_type")?,

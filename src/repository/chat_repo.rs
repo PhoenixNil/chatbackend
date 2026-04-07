@@ -233,7 +233,21 @@ FOR UPDATE
             .ok_or(AppError::Forbidden)?;
 
         let old_seq = row.try_get::<i64>("", "last_read_seq").unwrap_or(0);
-        let new_seq = old_seq.max(seq);
+        let latest_seq = txn
+            .query_one(Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                r#"
+SELECT COALESCE(MAX(seq), 0)::BIGINT AS latest_seq
+FROM messages
+WHERE chat_id = $1
+"#,
+                [chat_id.into()],
+            ))
+            .await?
+            .and_then(|latest_row| latest_row.try_get::<i64>("", "latest_seq").ok())
+            .unwrap_or(0);
+        let bounded_seq = clamp_read_seq(seq, latest_seq);
+        let new_seq = old_seq.max(bounded_seq);
 
         let advanced = if new_seq > old_seq {
             txn.query_one(Statement::from_sql_and_values(
@@ -367,5 +381,34 @@ LIMIT 1
             member_count,
             unread_count,
         })
+    }
+}
+
+fn clamp_read_seq(requested_seq: i64, latest_seq: i64) -> i64 {
+    requested_seq.max(0).min(latest_seq.max(0))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::clamp_read_seq;
+
+    #[test]
+    fn clamps_future_read_cursor_to_latest_message_seq() {
+        assert_eq!(clamp_read_seq(99, 7), 7);
+    }
+
+    #[test]
+    fn clamps_empty_chat_to_zero() {
+        assert_eq!(clamp_read_seq(99, 0), 0);
+    }
+
+    #[test]
+    fn clamps_negative_requested_seq_to_zero() {
+        assert_eq!(clamp_read_seq(-5, 7), 0);
+    }
+
+    #[test]
+    fn keeps_in_range_seq_unchanged() {
+        assert_eq!(clamp_read_seq(5, 7), 5);
     }
 }

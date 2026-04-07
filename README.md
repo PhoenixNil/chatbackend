@@ -40,7 +40,7 @@ src/
 
 **Chats** – create, list, members, message history, search, image upload
 
-**Read Receipts** – mark messages / chats as read
+**Read Receipts** – cursor `POST /api/chats/{chat_id}/read`
 
 **WebSocket** – `GET /ws`
 

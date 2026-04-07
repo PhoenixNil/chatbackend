@@ -60,7 +60,6 @@ pub fn router(state: AppState) -> Router {
             "/api/chats/{chat_id}/messages",
             get(chats::history).post(chats::create_image_message),
         )
-        .route("/api/messages/{message_id}/read", post(chats::mark_read))
         .route("/api/chats/{chat_id}/read", post(chats::mark_read_up_to))
         .route("/ws", get(ws::upgrade))
         .with_state(state)

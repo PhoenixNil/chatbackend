@@ -10,6 +10,7 @@ pub const IMAGE_MESSAGE_TYPE: &str = "image";
 pub struct Message {
     pub id: Uuid,
     pub chat_id: Uuid,
+    pub seq: i64,
     pub sender_id: Uuid,
     pub body: String,
     pub message_type: String,
@@ -26,6 +27,7 @@ impl From<MessageEntity> for Message {
         Self {
             id: value.id,
             chat_id: value.chat_id,
+            seq: value.seq,
             sender_id: value.sender_id,
             body: value.body,
             message_type: value.message_type,
@@ -43,6 +45,7 @@ impl From<MessageEntity> for Message {
 pub struct MessageSearchResult {
     pub id: Uuid,
     pub chat_id: Uuid,
+    pub seq: i64,
     pub sender_id: Uuid,
     pub body: String,
     pub message_type: String,

@@ -37,6 +37,7 @@ pub enum ServerMsg {
     NewMessage {
         chat_id: Uuid,
         message_id: Uuid,
+        seq: i64,
         sender_id: Uuid,
         body: String,
         message_type: String,

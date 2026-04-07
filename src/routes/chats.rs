@@ -40,13 +40,6 @@ pub struct SearchMessagesQuery {
     pub limit: Option<u64>,
 }
 
-#[derive(Debug, Serialize)]
-pub struct MarkReadResponse {
-    pub message_id: Uuid,
-    pub user_id: Uuid,
-    pub read_at: DateTime<Utc>,
-}
-
 #[derive(Debug, Deserialize, Validate)]
 pub struct MarkReadUpToRequest {
     pub up_to_seq: i64,
@@ -257,21 +250,6 @@ pub async fn search_messages(
     Ok(Json(messages))
 }
 
-pub async fn mark_read(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Path(message_id): Path<Uuid>,
-) -> Result<Json<MarkReadResponse>, AppError> {
-    let user_id = super::user_id_from_headers(&state, &headers)?;
-    let result = state.chat_service.mark_read(user_id, message_id).await?;
-
-    Ok(Json(MarkReadResponse {
-        message_id: result.message_id,
-        user_id: result.user_id,
-        read_at: result.read_at,
-    }))
-}
-
 pub async fn mark_read_up_to(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -349,6 +327,7 @@ fn broadcast_new_message(
         ServerMsg::NewMessage {
             chat_id: result.message.chat_id,
             message_id: result.message.id,
+            seq: result.message.seq,
             sender_id: result.message.sender_id,
             body: result.message.body.clone(),
             message_type: result.message.message_type.clone(),
