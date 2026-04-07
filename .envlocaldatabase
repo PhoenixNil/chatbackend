@@ -1,0 +1,5 @@
+APP_HOST=127.0.0.1
+APP_PORT=8080
+DATABASE_URL=postgres://postgres:postgres@127.0.0.1:{change_port}/chatbackend
+JWT_SECRET=change_me
+JWT_EXPIRE_MINUTES=1440
