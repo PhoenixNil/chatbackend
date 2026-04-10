@@ -44,6 +44,8 @@ src/
 
 **WebSocket** – `GET /ws`
 
+**Health** – `GET /health`, `GET /ready`
+
 > All endpoints (except register/login) require `Authorization: Bearer <token>`.
 
 ## Development

@@ -3,11 +3,13 @@ pub mod chats;
 pub mod users;
 pub mod ws;
 
+use axum::Json;
 use axum::Router;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::http::{HeaderMap, Method, header};
 use axum::routing::{get, post, put};
+use serde::Serialize;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -29,6 +31,8 @@ pub fn router(state: AppState) -> Router {
         .allow_headers(Any);
 
     Router::new()
+        .route("/health", get(health))
+        .route("/ready", get(health))
         .route("/api/auth/register", post(auth::register))
         .route("/api/auth/login", post(auth::login))
         .route("/api/users/me", get(users::me))
@@ -65,6 +69,19 @@ pub fn router(state: AppState) -> Router {
         .with_state(state)
         .layer(TraceLayer::new_for_http())
         .layer(cors)
+}
+
+#[derive(Debug, Serialize)]
+struct HealthResponse {
+    status: &'static str,
+    service: &'static str,
+}
+
+async fn health() -> Json<HealthResponse> {
+    Json(HealthResponse {
+        status: "ok",
+        service: "chatbackend",
+    })
 }
 
 #[derive(Debug, Clone, Copy)]
