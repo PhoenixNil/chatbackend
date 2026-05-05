@@ -7,7 +7,7 @@ use validator::Validate;
 use crate::errors::AppError;
 use crate::models::user::User;
 use crate::service::avatar_service::PresignedUpload;
-use crate::state::AppState;
+use crate::state::SharedAppState;
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct CreateAvatarUploadRequest {
@@ -47,7 +47,7 @@ pub struct UpdateAvatarRequest {
 }
 
 pub async fn me(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     super::AuthUser(user_id): super::AuthUser,
 ) -> Result<Json<User>, AppError> {
     let user = state.auth_service.user_profile(user_id).await?;
@@ -55,7 +55,7 @@ pub async fn me(
 }
 
 pub async fn avatar_upload_url(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     super::AuthUser(user_id): super::AuthUser,
     Json(payload): Json<CreateAvatarUploadRequest>,
 ) -> Result<Json<CreateAvatarUploadResponse>, AppError> {
@@ -76,7 +76,7 @@ pub async fn avatar_upload_url(
 }
 
 pub async fn update_avatar(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     super::AuthUser(user_id): super::AuthUser,
     Json(payload): Json<UpdateAvatarRequest>,
 ) -> Result<Json<User>, AppError> {

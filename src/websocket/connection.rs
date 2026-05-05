@@ -4,7 +4,7 @@ use tokio::sync::mpsc::{Sender, channel, error::TrySendError};
 use tracing::{debug, warn};
 use uuid::Uuid;
 
-use crate::state::AppState;
+use crate::state::{AppState, SharedAppState};
 use crate::websocket::dispatch;
 use crate::websocket::protocol::{ClientMsg, ServerMsg, UnreadReason, try_text_message};
 
@@ -71,7 +71,7 @@ impl LocalOutbox {
     }
 }
 
-pub async fn handle_socket(state: AppState, user_id: Uuid, socket: WebSocket) {
+pub async fn handle_socket(state: SharedAppState, user_id: Uuid, socket: WebSocket) {
     let connection_id = Uuid::new_v4();
     let (sender, mut out_rx) = channel::<Message>(WS_OUTBOX_CAPACITY);
     let outbox = LocalOutbox::new(user_id, connection_id, sender);

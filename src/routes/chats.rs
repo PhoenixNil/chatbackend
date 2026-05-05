@@ -13,7 +13,7 @@ use crate::models::chat::Chat;
 use crate::models::message::{Message, MessageSearchResult};
 use crate::service::avatar_service::PresignedUpload;
 use crate::service::chat_service::CreateImageMessageInput;
-use crate::state::AppState;
+use crate::state::{AppState, SharedAppState};
 use crate::websocket::protocol::{ServerMsg, UnreadReason};
 
 #[derive(Debug, Deserialize, Validate)]
@@ -112,13 +112,13 @@ pub struct CreateImageMessageRequest {
 }
 
 pub async fn create_chat(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Json(payload): Json<CreateChatRequest>,
 ) -> Result<Json<Chat>, AppError> {
     payload.validate()?;
 
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let chat_type = payload.chat_type.unwrap_or_else(|| "group".to_string());
 
     let chat = state
@@ -130,23 +130,23 @@ pub async fn create_chat(
 }
 
 pub async fn list_chats(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<Chat>>, AppError> {
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let chats = state.chat_service.list_chats(user_id).await?;
     Ok(Json(chats))
 }
 
 pub async fn image_upload_url(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<CreateImageUploadRequest>,
 ) -> Result<Json<CreateImageUploadResponse>, AppError> {
     payload.validate()?;
 
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     state
         .chat_service
         .require_chat_member_ids_for_user(chat_id, user_id)
@@ -169,12 +169,12 @@ pub async fn image_upload_url(
 }
 
 pub async fn history(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Query(query): Query<HistoryQuery>,
 ) -> Result<Json<Vec<Message>>, AppError> {
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let limit = query.limit.unwrap_or(50).clamp(1, 100);
 
     let messages = state
@@ -186,14 +186,14 @@ pub async fn history(
 }
 
 pub async fn create_image_message(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<CreateImageMessageRequest>,
 ) -> Result<Json<Message>, AppError> {
     payload.validate()?;
 
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     state
         .chat_service
         .require_chat_member_ids_for_user(chat_id, user_id)
@@ -227,18 +227,18 @@ pub async fn create_image_message(
         )
         .await?;
 
-    broadcast_new_message(&state, user_id, &message);
+    broadcast_new_message(state.as_ref(), user_id, &message);
 
     Ok(Json(message.message))
 }
 
 pub async fn search_messages(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Query(query): Query<SearchMessagesQuery>,
 ) -> Result<Json<Vec<MessageSearchResult>>, AppError> {
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let limit = query.limit.unwrap_or(20).clamp(1, 50);
     let search_query = query.q.unwrap_or_default();
 
@@ -251,14 +251,14 @@ pub async fn search_messages(
 }
 
 pub async fn mark_read_up_to(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<MarkReadUpToRequest>,
 ) -> Result<Json<MarkReadUpToResponse>, AppError> {
     payload.validate()?;
 
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let result = state
         .chat_service
         .mark_read_up_to(user_id, chat_id, payload.up_to_seq)
@@ -273,14 +273,14 @@ pub async fn mark_read_up_to(
 }
 
 pub async fn add_members(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
     Json(payload): Json<AddMembersRequest>,
 ) -> Result<Json<Vec<ChatMemberResponse>>, AppError> {
     payload.validate()?;
 
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let members = state
         .chat_service
         .add_members(user_id, chat_id, payload.members)
@@ -360,11 +360,11 @@ fn broadcast_new_message(
 }
 
 pub async fn members(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     headers: HeaderMap,
     Path(chat_id): Path<Uuid>,
 ) -> Result<Json<Vec<ChatMemberResponse>>, AppError> {
-    let user_id = super::user_id_from_headers(&state, &headers)?;
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
     let members = state
         .chat_service
         .list_chat_members(user_id, chat_id)

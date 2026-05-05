@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::errors::AppError;
-use crate::state::AppState;
+use crate::state::SharedAppState;
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct RegisterRequest {
@@ -30,7 +30,7 @@ pub struct AuthResponse {
 }
 
 pub async fn register(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<AuthResponse>, AppError> {
     payload.validate()?;
@@ -44,7 +44,7 @@ pub async fn register(
 }
 
 pub async fn login(
-    State(state): State<AppState>,
+    State(state): State<SharedAppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Json<AuthResponse>, AppError> {
     payload.validate()?;

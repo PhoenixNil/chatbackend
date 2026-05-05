@@ -11,6 +11,9 @@ use crate::rooms::manager::RoomManager;
 use crate::service::auth_service::AuthService;
 use crate::service::avatar_service::AvatarService;
 use crate::service::chat_service::ChatService;
+use std::sync::Arc;
+
+pub type SharedAppState = Arc<AppState>;
 
 #[derive(Clone)]
 pub struct AppState {

@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let config = Config::from_env();
-    let state = state::AppState::new(&config).await?;
+    let state = state::SharedAppState::new(state::AppState::new(&config).await?);
     let app = routes::router(state);
 
     let addr: SocketAddr = format!("{}:{}", config.host, config.port).parse()?;

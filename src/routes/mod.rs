@@ -15,10 +15,10 @@ use tower_http::trace::TraceLayer;
 use uuid::Uuid;
 
 use crate::errors::AppError;
-use crate::state::AppState;
+use crate::state::{AppState, SharedAppState};
 
 //API
-pub fn router(state: AppState) -> Router {
+pub fn router(state: SharedAppState) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods([
@@ -87,14 +87,14 @@ async fn health() -> Json<HealthResponse> {
 #[derive(Debug, Clone, Copy)]
 pub struct AuthUser(pub Uuid);
 
-impl FromRequestParts<AppState> for AuthUser {
+impl FromRequestParts<SharedAppState> for AuthUser {
     type Rejection = AppError;
 
     async fn from_request_parts(
         parts: &mut Parts,
-        state: &AppState,
+        state: &SharedAppState,
     ) -> Result<Self, Self::Rejection> {
-        Ok(Self(user_id_from_headers(state, &parts.headers)?))
+        Ok(Self(user_id_from_headers(state.as_ref(), &parts.headers)?))
     }
 }
 
