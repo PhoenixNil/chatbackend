@@ -1,7 +1,7 @@
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, EntityTrait,
-    QueryFilter, Set, Statement, TransactionTrait,
+    ModelTrait, PaginatorTrait, QueryFilter, Set, Statement, TransactionTrait,
 };
 use uuid::Uuid;
 
@@ -289,6 +289,34 @@ WHERE chat_id = $1
 
         txn.commit().await?;
         Ok((old_seq, new_seq, advanced))
+    }
+
+    pub async fn remove_member(&self, chat_id: Uuid, user_id: Uuid) -> Result<(), AppError> {
+        let member = chat_members::Entity::find_by_id((chat_id, user_id))
+            .one(&self.db)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("member {user_id} in chat {chat_id}")))?;
+
+        member.delete(&self.db).await?;
+        Ok(())
+    }
+
+    pub async fn count_members(&self, chat_id: Uuid) -> Result<u64, AppError> {
+        let count = chat_members::Entity::find()
+            .filter(chat_members::Column::ChatId.eq(chat_id))
+            .count(&self.db)
+            .await?;
+        Ok(count)
+    }
+
+    pub async fn delete_chat(&self, chat_id: Uuid) -> Result<(), AppError> {
+        let chat = chats::Entity::find_by_id(chat_id)
+            .one(&self.db)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("chat {chat_id}")))?;
+
+        chat.delete(&self.db).await?;
+        Ok(())
     }
 
     pub async fn insert_members(&self, chat_id: Uuid, members: &[Uuid]) -> Result<(), AppError> {

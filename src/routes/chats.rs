@@ -381,3 +381,13 @@ pub async fn members(
             .collect(),
     ))
 }
+
+pub async fn leave_chat(
+    State(state): State<SharedAppState>,
+    headers: HeaderMap,
+    Path(chat_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let user_id = super::user_id_from_headers(state.as_ref(), &headers)?;
+    state.chat_service.leave_chat(user_id, chat_id).await?;
+    Ok(Json(serde_json::json!({"status": "left"})))
+}

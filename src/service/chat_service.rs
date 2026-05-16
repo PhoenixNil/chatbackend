@@ -303,6 +303,27 @@ impl ChatService {
             .collect())
     }
 
+    pub async fn leave_chat(&self, user_id: Uuid, chat_id: Uuid) -> Result<(), AppError> {
+        let chat = self.require_chat(chat_id).await?;
+
+        if chat.chat_type == "direct" {
+            return Err(AppError::Validation(
+                "cannot leave a direct chat".to_string(),
+            ));
+        }
+
+        self.ensure_chat_member(chat_id, user_id).await?;
+        self.chat_repo.remove_member(chat_id, user_id).await?;
+
+        // If no members remain, clean up the entire chat (cascades to messages, reads, etc.)
+        let remaining = self.chat_repo.count_members(chat_id).await?;
+        if remaining == 0 {
+            self.chat_repo.delete_chat(chat_id).await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn list_chat_members(
         &self,
         requester_id: Uuid,

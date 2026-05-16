@@ -65,6 +65,7 @@ pub fn router(state: SharedAppState) -> Router {
             get(chats::history).post(chats::create_image_message),
         )
         .route("/api/chats/{chat_id}/read", post(chats::mark_read_up_to))
+        .route("/api/chats/{chat_id}/leave", post(chats::leave_chat))
         .route("/ws", get(ws::upgrade))
         .with_state(state)
         .layer(TraceLayer::new_for_http())
